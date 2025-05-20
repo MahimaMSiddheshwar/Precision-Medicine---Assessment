@@ -1,0 +1,15 @@
+Status	/N/slate/msiddhe/Assignment-2/aligned_reads/primary_bam_files/aligned_reads_SRR22269872_Aligned.sortedByCoord.out_primary.bam	/N/slate/msiddhe/Assignment-2/aligned_reads/primary_bam_files/aligned_reads_SRR22269873_Aligned.sortedByCoord.out_primary.bam	/N/slate/msiddhe/Assignment-2/aligned_reads/primary_bam_files/aligned_reads_SRR22269874_Aligned.sortedByCoord.out_primary.bam	/N/slate/msiddhe/Assignment-2/aligned_reads/primary_bam_files/aligned_reads_SRR22269875_Aligned.sortedByCoord.out_primary.bam	/N/slate/msiddhe/Assignment-2/aligned_reads/primary_bam_files/aligned_reads_SRR22269876_Aligned.sortedByCoord.out_primary.bam	/N/slate/msiddhe/Assignment-2/aligned_reads/primary_bam_files/aligned_reads_SRR22269877_Aligned.sortedByCoord.out_primary.bam	/N/slate/msiddhe/Assignment-2/aligned_reads/primary_bam_files/aligned_reads_SRR22269878_Aligned.sortedByCoord.out_primary.bam	/N/slate/msiddhe/Assignment-2/aligned_reads/primary_bam_files/aligned_reads_SRR22269879_Aligned.sortedByCoord.out_primary.bam	/N/slate/msiddhe/Assignment-2/aligned_reads/primary_bam_files/aligned_reads_SRR22269880_Aligned.sortedByCoord.out_primary.bam	/N/slate/msiddhe/Assignment-2/aligned_reads/primary_bam_files/aligned_reads_SRR22269881_Aligned.sortedByCoord.out_primary.bam	/N/slate/msiddhe/Assignment-2/aligned_reads/primary_bam_files/aligned_reads_SRR22269882_Aligned.sortedByCoord.out_primary.bam	/N/slate/msiddhe/Assignment-2/aligned_reads/primary_bam_files/aligned_reads_SRR22269883_Aligned.sortedByCoord.out_primary.bam
+Assigned	139331	96989	282282	311074	255751	956253	209739	83070	82162	835091	462486	192718
+Unassigned_Unmapped	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_Read_Type	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_Singleton	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_MappingQuality	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_Chimera	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_FragmentLength	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_Duplicate	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_MultiMapping	1712763	998003	666726	891679	393135	2175703	672429	181084	514395	2236610	1065670	609245
+Unassigned_Secondary	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_NonSplit	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_NoFeatures	69208	38594	34730	50150	25255	106213	60816	23462	65036	200093	113017	69073
+Unassigned_Overlapping_Length	0	0	0	0	0	0	0	0	0	0	0	0
+Unassigned_Ambiguity	1270	1169	1932	1197	1196	6285	2934	833	822	6957	3990	2110
