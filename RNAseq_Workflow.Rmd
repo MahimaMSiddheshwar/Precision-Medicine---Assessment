@@ -1,0 +1,239 @@
+# RNA-Seq Analysis Execution Script (HPC / SLURM)
+
+**Project:** SARS-CoV-2 RNA-Seq Analysis (Assignment-2)
+**Platform:** IU HPC (Slate / Quartz)
+**Workflow Type:** End-to-End Bulk RNA-Seq Pipeline
+
+---
+
+## 1. Environment Setup
+
+```bash
+# Navigate to Slate workspace
+cd /N/slate/msiddhe
+
+# Create project directory
+mkdir Assignment-2
+cd Assignment-2
+```
+
+---
+
+## 2. Data Acquisition (SRA → FASTQ)
+
+```bash
+# Load SRA toolkit
+module load sra-toolkit
+
+# Download RNA-Seq samples
+prefetch SRR22269883 SRR22269882 SRR22269881 SRR22269880 \
+         SRR22269879 SRR22269878 SRR22269877 SRR22269876 \
+         SRR22269875 SRR22269874 SRR22269873 SRR22269872
+
+# Convert SRA to FASTQ
+fasterq-dump SRR22269883 SRR22269882 SRR22269881 SRR22269880 \
+              SRR22269879 SRR22269878 SRR22269877 SRR22269876 \
+              SRR22269875 SRR22269874 SRR22269873 SRR22269872
+```
+
+---
+
+## 3. Raw Data Organization
+
+```bash
+# Create directory for raw FASTQ files
+mkdir Raw_Data
+mv *.fastq Raw_Data/
+```
+
+---
+
+## 4. Quality Control (Raw Reads)
+
+```bash
+# Load FastQC
+module load fastqc
+
+# Create QC directory
+mkdir fastqc_reports
+
+# Run FastQC
+fastqc Raw_Data/*.fastq -o fastqc_reports
+```
+
+### MultiQC Installation (Quartz)
+
+```bash
+cd /geode2/home/u060/msiddhe/Quartz
+mkdir installations
+cd installations
+
+module load python
+pip install multiqc
+
+export PATH="/geode2/home/u060/msiddhe/Quartz/.local/bin:$PATH"
+source ~/.bashrc
+
+multiqc --version
+```
+
+### Aggregate QC Reports
+
+```bash
+cd /N/slate/msiddhe/Assignment-2
+multiqc fastqc_reports
+```
+
+---
+
+## 5. Read Trimming
+
+```bash
+conda install -c bioconda trim-galore
+
+mkdir trimmed_reads
+trim_galore --quality 20 --length 30 \
+-o trimmed_reads Raw_Data/*.fastq
+```
+
+### Post-trimming QC
+
+```bash
+mkdir trimmed_fastqc_reports
+fastqc trimmed_reads/*.fq -o trimmed_fastqc_reports
+```
+
+---
+
+## 6. Reference Genome Preparation (hg38)
+
+```bash
+wget http://igenomes.illumina.com.s3-website-us-east-1.amazonaws.com/Homo_sapiens/UCSC/hg38/Homo_sapiens_UCSC_hg38.tar.gz
+tar -xzf Homo_sapiens_UCSC_hg38.tar.gz
+```
+
+---
+
+## 7. STAR Genome Indexing (SLURM)
+
+```bash
+mkdir star_index
+sbatch star_index.slurm
+```
+
+```bash
+#!/bin/bash
+#SBATCH --job-name=STAR_index
+#SBATCH --partition=gpu
+#SBATCH --nodes=2
+#SBATCH --cpus-per-task=11
+#SBATCH --mem=150gb
+#SBATCH --time=1-23:59:00
+#SBATCH -A c01064
+
+module load star/2.7.11a
+
+STAR --runThreadN 11 \
+     --runMode genomeGenerate \
+     --genomeDir star_index \
+     --genomeFastaFiles Homo_sapiens/UCSC/hg38/Sequence/WholeGenomeFasta/genome.fa \
+     --sjdbGTFfile Homo_sapiens/UCSC/hg38/Annotation/Genes/genes.gtf
+```
+
+---
+
+## 8. Read Alignment (STAR)
+
+```bash
+mkdir aligned_reads
+sbatch aligned_reads.slurm
+```
+
+```bash
+#!/bin/bash
+#SBATCH --job-name=STAR_align
+#SBATCH --partition=general
+#SBATCH --cpus-per-task=11
+#SBATCH --mem=150gb
+#SBATCH --time=1-23:59:00
+#SBATCH -A c01064
+
+module load star/2.7.11a
+
+input_dir="trimmed_reads"
+output_dir="aligned_reads"
+genome_dir="star_index"
+
+mkdir -p "$output_dir"
+
+for read_file in "$input_dir"/*.fq; do
+  sample_name=$(basename "$read_file" | cut -d '_' -f 1)
+  STAR --runThreadN 11 \
+       --genomeDir "$genome_dir" \
+       --readFilesIn "$read_file" \
+       --outSAMtype BAM SortedByCoordinate \
+       --outFileNamePrefix "$output_dir/${sample_name}_"
+done
+```
+
+---
+
+## 9. BAM Processing
+
+### Index BAM Files
+
+```bash
+module load samtools
+samtools index aligned_reads/*.bam
+```
+
+### Extract Primary Alignments Only
+
+```bash
+mkdir aligned_reads/primary_bam_files
+
+for bam in aligned_reads/*.bam; do
+  base=$(basename "$bam" .bam)
+  samtools view -F 256 -o aligned_reads/primary_bam_files/${base}_primary.bam "$bam"
+  samtools flagstat aligned_reads/primary_bam_files/${base}_primary.bam \
+  > aligned_reads/primary_bam_files/${base}_flagstat.txt
+done
+```
+
+---
+
+## 10. Gene Quantification (featureCounts)
+
+### All BAM Files
+
+```bash
+module load subread
+mkdir featurecounts_output
+
+featureCounts -T 8 -t exon -g gene_id \
+-a Homo_sapiens/UCSC/hg38/Annotation/Genes/genes.gtf \
+-o featurecounts_output/gene_counts.txt aligned_reads/*.bam
+```
+
+### Primary BAM Files Only
+
+```bash
+mkdir NewFeatureCounts
+
+featureCounts -T 8 -t exon -g gene_id \
+-a Homo_sapiens/UCSC/hg38/Annotation/Genes/genes.gtf \
+-o NewFeatureCounts/gene_counts.txt aligned_reads/primary_bam_files/*.bam
+```
+
+---
+
+## 11. Transfer Results to Local Machine
+
+```bash
+scp msiddhe@quartz.uits.iu.edu:/N/slate/msiddhe/Assignment-2/featurecounts_output/gene_counts.txt C:/Users/mmsid/Downloads/
+scp msiddhe@quartz.uits.iu.edu:/N/slate/msiddhe/Assignment-2/NewFeatureCounts/gene_counts.txt C:/Users/mmsid/Downloads/
+```
+
+---
+
+
